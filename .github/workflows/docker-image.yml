@@ -12,18 +12,40 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v2
 
+    - name: Set up Java Environment
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Build with Gradle
+      run: ./gradlew clean bootJar
+
     - name: Login to Docker Repository
       run: |
         echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
-    - name: Build and Push Docker Image
+    - name: Define Image Tag
+      id: date
+      run: |
+        echo "::set-output name=tag::$(date +%s)"
+        
+    - name: Build Docker Image
       run: |
         IMAGE_NAME=mainforce/spring-cloud-config-server
-        IMAGE_TAG=$(date +%s)
-        ARCH=amd64
-        
-        docker build --build-arg TARGETARCH=$ARCH --tag $IMAGE_NAME:$IMAGE_TAG .
-        docker push $IMAGE_NAME:$IMAGE_TAG
-        
-        docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
+        docker build -f Dockerfile --build-arg TARGETARCH=amd64 --tag $IMAGE_NAME:${{ steps.date.outputs.tag }} .
+
+    - name: Push Docker Image with Timestamp Tag
+      run: |
+        IMAGE_NAME=mainforce/spring-cloud-config-server
+        docker push $IMAGE_NAME:${{ steps.date.outputs.tag }}
+
+    - name: Tag Docker Image as Latest
+      run: |
+        IMAGE_NAME=mainforce/spring-cloud-config-server
+        docker tag $IMAGE_NAME:${{ steps.date.outputs.tag }} $IMAGE_NAME:latest
+
+    - name: Push Docker Image with Latest Tag
+      run: |
+        IMAGE_NAME=mainforce/spring-cloud-config-server
         docker push $IMAGE_NAME:latest
