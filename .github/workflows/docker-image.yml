@@ -1,24 +1,4 @@
-# name: Docker Image CI
-
-# on:
-#   push:
-#     branches: [ "main" ]
-#   pull_request:
-#     branches: [ "main" ]
-
-# jobs:
-
-#   build:
-
-#     runs-on: ubuntu-latest
-
-#     steps:
-#     - uses: actions/checkout@v3
-#     - name: Build the Docker image
-#       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-
-
-name: Docker Image CI
+name: Docker Image Build and Push
 
 on:
   push:
@@ -42,7 +22,7 @@ jobs:
         IMAGE_TAG=$(date +%s)
         ARCH=amd64
         
-        ddocker build --build-arg TARGETARCH=$ARCH --tag $IMAGE_NAME:$IMAGE_TAG
+        docker build --build-arg TARGETARCH=$ARCH --tag $IMAGE_NAME:$IMAGE_TAG
         docker push $IMAGE_NAME:$IMAGE_TAG
         
         docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest
