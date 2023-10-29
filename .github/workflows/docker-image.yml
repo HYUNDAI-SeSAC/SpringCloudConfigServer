@@ -33,7 +33,9 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Login to Docker Repository
-      run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login my-registry-url.com -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      run: |
+        DOCKER_URL=https://hub.docker.com/repository/docker/mainforce/spring-cloud-config-server/
+        echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${DOCKER_URL} -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
     - name: Build and Push Docker Image
       run: |
