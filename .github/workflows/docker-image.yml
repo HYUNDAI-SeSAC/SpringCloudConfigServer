@@ -15,6 +15,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    env:
+      IMAGE_NAME: mainforce/spring-cloud-config-server
+      JAVA_DISTRIBUTION: temurin
+      JAVA_VERSION: '17'
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v2
@@ -22,37 +28,27 @@ jobs:
     - name: Set up Java Environment
       uses: actions/setup-java@v2
       with:
-        distribution: 'temurin'
-        java-version: '17'
+        distribution: ${{ env.JAVA_DISTRIBUTION }}
+        java-version: ${{ env.JAVA_VERSION }}
 
     - name: Build with Gradle
       run: ./gradlew clean bootJar
 
     - name: Login to Docker Repository
-      run: |
-        echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
 
     - name: Define Image Tag
       id: date
-      run: |
-        echo "::set-output name=tag::$(date +%s)"
-        
+      run: echo "::set-output name=tag::$(date +%s)"
+
     - name: Build Docker Image
-      run: |
-        IMAGE_NAME=mainforce/spring-cloud-config-server
-        docker build -f Dockerfile --build-arg TARGETARCH=amd64 --tag $IMAGE_NAME:${{ steps.date.outputs.tag }} .
+      run: docker build -f Dockerfile --build-arg TARGETARCH=amd64 --tag ${{ env.IMAGE_NAME }}:${{ steps.date.outputs.tag }} .
 
     - name: Push Docker Image with Timestamp Tag
-      run: |
-        IMAGE_NAME=mainforce/spring-cloud-config-server
-        docker push $IMAGE_NAME:${{ steps.date.outputs.tag }}
+      run: docker push ${{ env.IMAGE_NAME }}:${{ steps.date.outputs.tag }}
 
     - name: Tag Docker Image as Latest
-      run: |
-        IMAGE_NAME=mainforce/spring-cloud-config-server
-        docker tag $IMAGE_NAME:${{ steps.date.outputs.tag }} $IMAGE_NAME:latest
+      run: docker tag ${{ env.IMAGE_NAME }}:${{ steps.date.outputs.tag }} ${{ env.IMAGE_NAME }}:latest
 
     - name: Push Docker Image with Latest Tag
-      run: |
-        IMAGE_NAME=mainforce/spring-cloud-config-server
-        docker push $IMAGE_NAME:latest
+      run: docker push ${{ env.IMAGE_NAME }}:latest
